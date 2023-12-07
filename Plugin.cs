@@ -3,7 +3,7 @@ using BepInEx.Logging;
 using HarmonyLib;
 using UnityEngine;
 using System.Collections.Generic;
-
+using BepInEx.Configuration;
 
 namespace LC_Optim
 {
@@ -13,17 +13,29 @@ namespace LC_Optim
         private Harmony thisHarmony;
         private static Dictionary<int, ulong> instanceMap = new Dictionary<int, ulong>();
         private static ulong deadtimer = 100;
+        private static ManualLogSource Log;
+        private static ConfigEntry<bool> configShowDebug;
+
+        static void Debug(object data, LogLevel logLevel = LogLevel.Info)
+        {
+            if(configShowDebug.Value)Log.Log(logLevel, data);
+        }
+
         private void Awake()
         {
+            configShowDebug = Config.Bind("General", "Enable debug printing", true, "Enabling this will show debug info in console, e.g. when a new centipede gets tracked or removed.");
+
             thisHarmony = new Harmony(PluginMetadata.PLUGIN_GUID);
-            thisHarmony.Patch(typeof(CentipedeAI).GetMethod("DoAIInterval"), postfix: new HarmonyMethod(typeof(Plugin), nameof(RemoveLagCentipede)), prefix: new HarmonyMethod(typeof(Plugin), nameof(RemoveLagCentipede)));
-            Logger.LogWarning("Registered the patch method.");
-            Logger.LogWarning("Deactivating UnityLog");
+            thisHarmony.Patch(typeof(CentipedeAI).GetMethod("DoAIInterval"), prefix: new HarmonyMethod(typeof(Plugin), nameof(RemoveLagCentipede)));
+            Debug("Registered the patch method", LogLevel.Warning);
+            Log = Logger;
+            
+            
         }
 
 
         public static void RemoveLagCentipede(CentipedeAI __instance)
-        {
+        {          
             if(!__instance.TargetClosestPlayer(1.5f, false, 70f))
             {
                 int oid = __instance.GetInstanceID();
@@ -31,6 +43,7 @@ namespace LC_Optim
                 if (!instanceMap.ContainsKey(oid))
                 { 
                     instanceMap.Add(oid, tfc);
+                    Debug($"Tracked {oid}");
                 }
                 else
                 {
@@ -44,13 +57,14 @@ namespace LC_Optim
                         __instance.KillEnemy(true);
                         // clear entry
                         instanceMap.Remove(oid);
+                        Debug($"Removed centipede at {oid}", LogLevel.Info);
                     }
                     else // update the entry
                     {
                         instanceMap[oid] = tfc;
                     }
                 }               
-            }
+            }            
         }
 
         public void OnDestroy()

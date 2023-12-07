@@ -8,7 +8,7 @@ namespace LC_Optim
     {
         public const string PLUGIN_GUID = "mnc.fixcentipedelag";
         public const string PLUGIN_NAME = "FixCentipedeLag";
-        public const string PLUGIN_VERSION = "2023.12.4";
+        public const string PLUGIN_VERSION = "2023.12.7";
 
     }
 }
