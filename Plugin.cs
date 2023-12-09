@@ -15,6 +15,7 @@ namespace LC_Optim
         private static ulong deadtimer = 100;
         private static ManualLogSource Log;
         private static ConfigEntry<bool> configShowDebug;
+        private static ConfigEntry<ulong> configDeadTimer;
 
         static void Debug(object data, LogLevel logLevel = LogLevel.Info)
         {
@@ -24,6 +25,8 @@ namespace LC_Optim
         private void Awake()
         {
             configShowDebug = Config.Bind("General", "Enable debug printing", true, "Enabling this will show debug info in console, e.g. when a new centipede gets tracked or removed.");
+            configDeadTimer = Config.Bind("General", "Dead Timer", (ulong)100, "If the enemy tries to jump to the ceiling multiple times during that interval (in frames), it is assumed to be stuck." +
+                " This will prevent the enemy from lagging the game.");
 
             thisHarmony = new Harmony(PluginMetadata.PLUGIN_GUID);
             thisHarmony.Patch(typeof(CentipedeAI).GetMethod("DoAIInterval"), prefix: new HarmonyMethod(typeof(Plugin), nameof(RemoveLagCentipede)));
